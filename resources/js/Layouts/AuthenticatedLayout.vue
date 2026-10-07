@@ -34,6 +34,12 @@ const showingNavigationDropdown = ref(false);
                                 class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex"
                             >
                                 <NavLink
+                                    :href="route('dashboard')"
+                                    :active="route().current('dashboard')"
+                                >
+                                    Dashboard
+                                </NavLink>
+                                <NavLink
                                     :href="route('notes.index')"
                                     :active="route().current('notes.*')"
                                 >
@@ -91,6 +97,8 @@ const showingNavigationDropdown = ref(false);
                         <!-- Hamburger -->
                         <div class="-me-2 flex items-center sm:hidden">
                             <button
+                                aria-label="Toggle navigation"
+                                :aria-expanded="showingNavigationDropdown"
                                 @click="
                                     showingNavigationDropdown =
                                         !showingNavigationDropdown
@@ -140,6 +148,12 @@ const showingNavigationDropdown = ref(false);
                     class="sm:hidden"
                 >
                     <div class="space-y-1 pb-3 pt-2">
+                        <ResponsiveNavLink
+                            :href="route('dashboard')"
+                            :active="route().current('dashboard')"
+                        >
+                            Dashboard
+                        </ResponsiveNavLink>
                         <ResponsiveNavLink
                             :href="route('notes.index')"
                             :active="route().current('notes.*')"

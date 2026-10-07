@@ -1,23 +1,17 @@
 <?php
 
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\ProfileController;
-use Illuminate\Foundation\Application;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
-Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
+Route::get('/', function (): RedirectResponse {
+    return redirect()->route('login');
 });
 
-Route::redirect('/dashboard', '/notes')->name('dashboard');
-
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::resource('notes', NoteController::class)->except('show');
     Route::patch('/notes/{note}/pin', [NoteController::class, 'togglePin'])->name('notes.pin');
 });
