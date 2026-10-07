@@ -40,9 +40,10 @@ ENV APP_ENV=production \
     APP_CONFIG_CACHE=/tmp/config.php \
     APP_ROUTES_CACHE=/tmp/routes.php \
     APP_EVENTS_CACHE=/tmp/events.php \
+    RUN_MIGRATIONS=true \
     PHP_CLI_SERVER_WORKERS=4
 
 EXPOSE 8000
 # FunctionGraph ignores WORKDIR, so use absolute paths.
 # --isolated needs the cache_locks table; fall back to a plain migrate on the very first deploy.
-CMD ["sh", "-c", "cd /app && mkdir -p /tmp/views && (php /app/artisan migrate --force --isolated || php /app/artisan migrate --force) && exec php /app/artisan serve --host=0.0.0.0 --port=8000 --no-reload"]
+CMD ["sh", "-c", "cd /app && mkdir -p /tmp/views && if [ \"${RUN_MIGRATIONS:-true}\" = \"true\" ]; then (php /app/artisan migrate --force --isolated || php /app/artisan migrate --force); fi && exec php /app/artisan serve --host=0.0.0.0 --port=8000 --no-reload"]
