@@ -20,6 +20,7 @@ class AdminUsersTest extends TestCase
         $admin = User::factory()->create([
             'name' => 'Admin User',
             'email' => 'admin@example.com',
+            'last_login_at' => now()->subDay(),
         ]);
         $idleUser = User::factory()->create([
             'name' => 'Idle User',
@@ -53,8 +54,10 @@ class AdminUsersTest extends TestCase
                 ->has('users.data', 3)
                 ->where('users.data.0.name', 'Admin User')
                 ->where('users.data.0.isAdmin', true)
+                ->where('users.data.0.lastLoginAt', now()->subDay()->toIso8601String())
                 ->where('users.data.1.name', 'Idle User')
                 ->where('users.data.1.isAdmin', false)
+                ->where('users.data.1.lastLoginAt', null)
                 ->where('users.data.1.isOnline', false)
                 ->where('users.data.2.name', 'Online User')
                 ->where('users.data.2.isAdmin', false)

@@ -2,6 +2,13 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
 
+function formatDateTime(value) {
+    return new Intl.DateTimeFormat(undefined, {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+    }).format(new Date(value));
+}
+
 defineProps({
     users: {
         type: Object,
@@ -46,6 +53,9 @@ defineProps({
                                         Role
                                     </th>
                                     <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500" scope="col">
+                                        Last login
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500" scope="col">
                                         Activity
                                     </th>
                                 </tr>
@@ -67,6 +77,9 @@ defineProps({
                                         </span>
                                         <span v-else class="text-gray-500">User</span>
                                     </td>
+                                    <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
+                                        {{ user.lastLoginAt ? formatDateTime(user.lastLoginAt) : 'Never' }}
+                                    </td>
                                     <td class="whitespace-nowrap px-6 py-4 text-sm">
                                         <span
                                             class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium"
@@ -77,7 +90,7 @@ defineProps({
                                     </td>
                                 </tr>
                                 <tr v-if="users.data.length === 0">
-                                    <td colspan="4" class="px-6 py-10 text-center text-sm text-gray-500">
+                                    <td colspan="5" class="px-6 py-10 text-center text-sm text-gray-500">
                                         No user accounts found.
                                     </td>
                                 </tr>

@@ -24,13 +24,14 @@ class UsersController extends Controller
         $adminEmails = config('admin.emails', []);
 
         $users = User::query()
-            ->select(['id', 'name', 'email'])
+            ->select(['id', 'name', 'email', 'last_login_at'])
             ->orderBy('name')
             ->paginate(25)
             ->through(static fn (User $user): array => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'lastLoginAt' => $user->last_login_at?->toIso8601String(),
                 'isAdmin' => in_array(strtolower($user->email), $adminEmails, true),
                 'isOnline' => in_array($user->id, $onlineUserIds, true),
             ]);
