@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\UsersController as AdminUsersController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\ProfileController;
@@ -12,6 +13,7 @@ Route::get('/', function (): RedirectResponse {
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
+    Route::get('/admin/users', AdminUsersController::class)->name('admin.users.index');
     Route::resource('notes', NoteController::class)->except('show');
     Route::patch('/notes/{note}/pin', [NoteController::class, 'togglePin'])->name('notes.pin');
 });

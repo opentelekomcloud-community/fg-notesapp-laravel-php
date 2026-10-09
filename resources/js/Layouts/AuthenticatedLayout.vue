@@ -50,6 +50,13 @@ const showingNavigationDropdown = ref(false);
                                 >
                                     Notes
                                 </NavLink>
+                                <NavLink
+                                    v-if="$page.props.canViewAdmin"
+                                    :href="route('admin.users.index')"
+                                    :active="route().current('admin.*')"
+                                >
+                                    Users
+                                </NavLink>
                             </div>
                         </div>
 
@@ -164,6 +171,13 @@ const showingNavigationDropdown = ref(false);
                             :active="route().current('notes.*')"
                         >
                             Notes
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            v-if="$page.props.canViewAdmin"
+                            :href="route('admin.users.index')"
+                            :active="route().current('admin.*')"
+                        >
+                            Users
                         </ResponsiveNavLink>
                     </div>
 
