@@ -1,4 +1,4 @@
-# Container image for Huawei Cloud FunctionGraph (listens on port 8000, runs as UID/GID 1003).
+# Container image for FunctionGraph (listens on port 8000, runs as UID/GID 1003).
 
 FROM composer:2 AS vendor
 WORKDIR /app
