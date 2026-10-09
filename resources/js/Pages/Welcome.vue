@@ -1,6 +1,8 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
 
+const gitVersion = __GIT_VERSION__;
+
 defineProps({
     canLogin: {
         type: Boolean,
@@ -105,7 +107,7 @@ function handleImageError() {
                 <footer
                     class="py-16 text-center text-sm text-black dark:text-white/70"
                 >
-                    T Cloud Public Community - Laravel v{{ laravelVersion }} (PHP v{{ phpVersion }})
+                    T Cloud Public Community - Laravel v{{ laravelVersion }} (PHP v{{ phpVersion }}) | Git {{ gitVersion }}
                     
                 </footer>
             </div>

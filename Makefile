@@ -9,6 +9,7 @@ build: clean
 docker_build: 
 	docker buildx build \
 	  --platform linux/amd64 \
+	  --build-arg GIT_COMMIT=$(shell git rev-parse HEAD) \
 		--file $(DOCKER_FILE) \
 		--tag $(IMAGE_NAME):latest .
 
