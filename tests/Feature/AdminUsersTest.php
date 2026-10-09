@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Note;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -74,9 +75,53 @@ class AdminUsersTest extends TestCase
     public function test_users_not_on_the_admin_allowlist_are_forbidden(): void
     {
         config(['admin.emails' => ['admin@example.com']]);
+        $regularUser = User::factory()->create();
+        $targetUser = User::factory()->create();
 
-        $this->actingAs(User::factory()->create())
+        $this->actingAs($regularUser)
             ->get(route('admin.users.index'))
             ->assertForbidden();
+
+        $this->actingAs($regularUser)
+            ->delete(route('admin.users.destroy', $targetUser))
+            ->assertForbidden();
+
+        $this->assertModelExists($targetUser);
+    }
+
+    public function test_admin_can_delete_an_account_and_its_related_data(): void
+    {
+        config(['admin.emails' => ['admin@example.com']]);
+
+        $admin = User::factory()->create(['email' => 'admin@example.com']);
+        $user = User::factory()->create();
+        $note = Note::factory()->for($user)->create();
+
+        DB::table('sessions')->insert([
+            'id' => 'deleted-user-session',
+            'user_id' => $user->id,
+            'payload' => '',
+            'last_activity' => now()->timestamp,
+        ]);
+
+        $this->actingAs($admin)
+            ->delete(route('admin.users.destroy', $user))
+            ->assertRedirect(route('admin.users.index'));
+
+        $this->assertModelMissing($user);
+        $this->assertDatabaseMissing('notes', ['id' => $note->id]);
+        $this->assertDatabaseMissing('sessions', ['id' => 'deleted-user-session']);
+    }
+
+    public function test_admin_cannot_delete_their_own_account(): void
+    {
+        config(['admin.emails' => ['admin@example.com']]);
+        $admin = User::factory()->create(['email' => 'admin@example.com']);
+
+        $this->actingAs($admin)
+            ->delete(route('admin.users.destroy', $admin))
+            ->assertForbidden();
+
+        $this->assertModelExists($admin);
     }
 }

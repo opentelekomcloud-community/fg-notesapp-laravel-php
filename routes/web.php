@@ -14,6 +14,7 @@ Route::get('/', function (): RedirectResponse {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::get('/admin/users', AdminUsersController::class)->name('admin.users.index');
+    Route::delete('/admin/users/{user}', [AdminUsersController::class, 'destroy'])->name('admin.users.destroy');
     Route::resource('notes', NoteController::class)->except('show');
     Route::patch('/notes/{note}/pin', [NoteController::class, 'togglePin'])->name('notes.pin');
 });

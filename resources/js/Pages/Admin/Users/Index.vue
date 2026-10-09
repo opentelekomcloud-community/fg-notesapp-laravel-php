@@ -1,6 +1,43 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, Link } from '@inertiajs/vue3';
+import DangerButton from '@/Components/DangerButton.vue';
+import Modal from '@/Components/Modal.vue';
+import SecondaryButton from '@/Components/SecondaryButton.vue';
+import { Head, Link, useForm } from '@inertiajs/vue3';
+import { ref } from 'vue';
+
+const confirmingUserDeletion = ref(false);
+const selectedUser = ref(null);
+const deleteForm = useForm({});
+
+const confirmUserDeletion = (user) => {
+    selectedUser.value = user;
+    confirmingUserDeletion.value = true;
+};
+
+const closeDeletionModal = () => {
+    if (deleteForm.processing) {
+        return;
+    }
+
+    confirmingUserDeletion.value = false;
+    selectedUser.value = null;
+    deleteForm.clearErrors();
+};
+
+const deleteUser = () => {
+    if (!selectedUser.value) {
+        return;
+    }
+
+    deleteForm.delete(route('admin.users.destroy', selectedUser.value.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            confirmingUserDeletion.value = false;
+            selectedUser.value = null;
+        },
+    });
+};
 
 function formatDateTime(value) {
     return new Intl.DateTimeFormat(undefined, {
@@ -58,6 +95,9 @@ defineProps({
                                     <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500" scope="col">
                                         Activity
                                     </th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500" scope="col">
+                                        Actions
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-200 bg-white">
@@ -88,9 +128,19 @@ defineProps({
                                             {{ user.isOnline ? 'Online' : 'Offline' }}
                                         </span>
                                     </td>
+                                    <td class="whitespace-nowrap px-6 py-4 text-right text-sm">
+                                        <DangerButton
+                                            v-if="user.id !== $page.props.auth.user.id"
+                                            type="button"
+                                            @click="confirmUserDeletion(user)"
+                                        >
+                                            Delete
+                                        </DangerButton>
+                                        <span v-else class="text-gray-500">Current account</span>
+                                    </td>
                                 </tr>
                                 <tr v-if="users.data.length === 0">
-                                    <td colspan="5" class="px-6 py-10 text-center text-sm text-gray-500">
+                                    <td colspan="6" class="px-6 py-10 text-center text-sm text-gray-500">
                                         No user accounts found.
                                     </td>
                                 </tr>
@@ -124,5 +174,32 @@ defineProps({
                 </div>
             </div>
         </div>
+
+        <Modal :show="confirmingUserDeletion" @close="closeDeletionModal">
+            <div class="p-6">
+                <h2 class="text-lg font-medium text-gray-900">
+                    Delete {{ selectedUser?.name }}'s account?
+                </h2>
+                <p class="mt-2 text-sm text-gray-600">
+                    This permanently deletes {{ selectedUser?.email }} and all of their notes.
+                </p>
+
+                <div class="mt-6 flex justify-end gap-3">
+                    <SecondaryButton
+                        :disabled="deleteForm.processing"
+                        @click="closeDeletionModal"
+                    >
+                        Cancel
+                    </SecondaryButton>
+                    <DangerButton
+                        :class="{ 'opacity-25': deleteForm.processing }"
+                        :disabled="deleteForm.processing"
+                        @click="deleteUser"
+                    >
+                        {{ deleteForm.processing ? 'Deleting...' : 'Delete account' }}
+                    </DangerButton>
+                </div>
+            </div>
+        </Modal>
     </AuthenticatedLayout>
 </template>

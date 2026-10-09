@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -39,5 +40,19 @@ class UsersController extends Controller
         return Inertia::render('Admin/Users/Index', [
             'users' => $users,
         ]);
+    }
+
+    public function destroy(User $user): RedirectResponse
+    {
+        Gate::authorize('view-admin');
+
+        abort_if(auth()->id() === $user->id, 403);
+
+        DB::transaction(function () use ($user): void {
+            DB::table('sessions')->where('user_id', $user->id)->delete();
+            $user->delete();
+        });
+
+        return redirect()->route('admin.users.index')->with('success', 'User account deleted.');
     }
 }
