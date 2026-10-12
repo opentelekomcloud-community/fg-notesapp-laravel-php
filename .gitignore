@@ -10,8 +10,8 @@
 /.idea
 /.nova
 /.phpunit.cache
-/.vscode
 /.zed
+/.vscode/mcp.json
 /auth.json
 /node_modules
 /public/build
