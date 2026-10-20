@@ -31,6 +31,10 @@ RUN sed -i \
         -e '/^group = /d' \
         -e 's|^listen = 9000$|listen = 127.0.0.1:9000|' \
         /usr/local/etc/php-fpm.d/www.conf \
+    && printf '%s\n' \
+        'access.log = /proc/self/fd/2' \
+        'access.format = "[%t] php-fpm [%{HTTP_X_CFF_REQUEST_ID}e] \"%m %r\" %s"' \
+        >> /usr/local/etc/php-fpm.d/www.conf \
     && sed -i 's|^;pid = run/php-fpm.pid|pid = /tmp/php-fpm.pid|' /usr/local/etc/php-fpm.conf \
     && printf '\nclear_env = no\n' >> /usr/local/etc/php-fpm.d/www.conf \
     && chown -R 1003:1003 /app \
