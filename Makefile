@@ -1,6 +1,10 @@
 SHELL:=/bin/bash
 TARGET_PATH=target
+
+# To use artisan serve as server:
 # DOCKER_FILE=Dockerfile
+
+# To use nginx as server:
 DOCKER_FILE=docker_nginx/Dockerfile_nginx
 
 IMAGE_NAME=notes-app-laravel-php
