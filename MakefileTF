@@ -1,0 +1,82 @@
+# Makefile for Terraform deployment of the Container HTTP Function sample
+
+# Include Makefile for build and docker tasks
+include ./Makefile 
+
+# Terraform backend configuration
+BACKEND_CONFIG_BUCKET := "doc-samples-tf-backend"
+BACKEND_CONFIG_KEY := "terraform_state/php/fg-notesapp-laravel-php.tf"
+BACKEND_CONFIG_REGION := "eu-de"
+BACKEND_CONFIG_ENDPOINTS := "endpoints={s3=\"https://obs.eu-de.otc.t-systems.com\"}"
+
+CURRENT_MAKEFILE := $(firstword $(MAKEFILE_LIST))
+
+# Terraform initialization
+tf_init:
+	terraform -chdir=terraform \
+	  init \
+	  -backend-config=$(BACKEND_CONFIG_ENDPOINTS) \
+	  -backend-config="bucket=$(BACKEND_CONFIG_BUCKET)" \
+	  -backend-config="key=$(BACKEND_CONFIG_KEY)" \
+	  -backend-config="region=$(BACKEND_CONFIG_REGION)"
+
+# Terraform plan
+tf_plan: 
+	if [ ! -f "terraform/.terraform.lock.hcl" ]; then \
+		$(MAKE) -f $(CURRENT_MAKEFILE) tf_init; \
+	fi
+	terraform -chdir=terraform \
+	  plan \
+		-var-file="variables.tfvars" \
+		-var="image_url=$(OTC_SWR_ENDPOINT)/$(OTC_SWR_ORGANIZATION)/$(IMAGE_NAME):$(IMAGE_TAG)"
+
+# Terraform update with pushing a new Docker image
+tf_apply: docker_push
+	if [ ! -f "terraform/.terraform.lock.hcl" ]; then \
+		$(MAKE) -f $(CURRENT_MAKEFILE) tf_init; \
+	fi
+	terraform -chdir=terraform \
+	  apply -auto-approve \
+	  -var-file="variables.tfvars" \
+		-var="image_url=$(OTC_SWR_ENDPOINT)/$(OTC_SWR_ORGANIZATION)/$(IMAGE_NAME):$(IMAGE_TAG)"
+
+# Terraform update without pushing a new Docker image
+tf_apply_no_push: 
+	if [ ! -f "terraform/.terraform.lock.hcl" ]; then \
+		$(MAKE) -f $(CURRENT_MAKEFILE) tf_init; \
+	fi
+	terraform -chdir=terraform \
+	  apply -auto-approve \
+	  -var-file="variables.tfvars" \
+		-var="image_url=$(OTC_SWR_ENDPOINT)/$(OTC_SWR_ORGANIZATION)/$(IMAGE_NAME):$(IMAGE_TAG)"
+
+# Terraform destroy target
+tf_destroy:
+	terraform -chdir=terraform \
+	  destroy -auto-approve \
+		-var-file="variables.tfvars" \
+		-var="image_url=$(OTC_SWR_ENDPOINT)/$(OTC_SWR_ORGANIZATION)/$(IMAGE_NAME):$(IMAGE_TAG)"
+
+# use this target to update the Function Graph image
+update_fg_image: docker_push
+  # getting Token for authentication from Username/Password and function URN...
+	@set -e; \
+	OTC_TOKEN=$$(../../utils/tokenFromUsername.sh); \
+	MY_FUNCTION_URN=$$(terraform -chdir=terraform output -raw MY_FUNCTION_URN); \
+	CONFIG_URL="https://functiongraph.$(OTC_SDK_REGION).otc.t-systems.com/v2/$(OTC_SDK_PROJECTID)/fgs/functions/$$MY_FUNCTION_URN/config"; \
+	echo "Fetching Function Config from $$CONFIG_URL"; \
+	config=$$(curl -sS -X GET \
+	  -H "Content-Type: application/json" \
+	  -H "x-auth-token: $$OTC_TOKEN" \
+	  "$$CONFIG_URL"); \
+	echo "Updating $$config"; \
+	updated_config=$$(printf '%s\n' "$$config" | jq 'del(.type, .log_group_id, .log_stream_id, .enable_lts_log)'); \
+	echo "Updated Function Config: $$updated_config"; \
+	curl -X PUT \
+	 -H "Content-Type: application/json" \
+	 -H "x-auth-token: $$OTC_TOKEN" \
+	 -d "$$updated_config" \
+	 "$$CONFIG_URL";
+
+
+.PHONY: tf_init tf_plan tf_apply tf_destroy tf_apply_no_push update_fg_image

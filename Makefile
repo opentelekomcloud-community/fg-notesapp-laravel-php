@@ -2,7 +2,9 @@ SHELL:=/bin/bash
 TARGET_PATH=target
 DOCKER_FILE=Dockerfile
 
-IMAGE_NAME=notes-app-laravel
+IMAGE_NAME=notes-app-laravel-php
+
+IMAGE_TAG := "v-$(shell date +%Y%m%d%H%M%S)"
 
 build: clean
 
@@ -11,7 +13,7 @@ docker_build:
 	  --platform linux/amd64 \
 	  --build-arg GIT_COMMIT=$(shell git rev-parse HEAD) \
 		--file $(DOCKER_FILE) \
-		--tag $(IMAGE_NAME):latest .
+		--tag $(IMAGE_NAME):$(IMAGE_TAG) .
 
 docker_run_local:
 	docker container run \
@@ -20,13 +22,13 @@ docker_run_local:
 		--publish 8000:8000 \
 		--user 1003:1003 \
 		--name $(IMAGE_NAME) \
-		$(IMAGE_NAME):latest
+		$(IMAGE_NAME):$(IMAGE_TAG)
 
 docker_push: docker_build
   # see: https://docs.otc.t-systems.com/software-repository-container/umn/image_management/obtaining_a_long-term_valid_login_command.html#swr-01-1000
 	docker login -u $(OTC_SDK_PROJECTNAME)@$(OTC_SDK_AK) -p $(OTC_SWR_LOGIN_KEY) $(OTC_SWR_ENDPOINT)
-	docker tag $(IMAGE_NAME):latest $(OTC_SWR_ENDPOINT)/$(OTC_SWR_ORGANIZATION)/$(IMAGE_NAME):latest
-	docker push $(OTC_SWR_ENDPOINT)/$(OTC_SWR_ORGANIZATION)/$(IMAGE_NAME):latest
+	docker tag $(IMAGE_NAME):$(IMAGE_TAG) $(OTC_SWR_ENDPOINT)/$(OTC_SWR_ORGANIZATION)/$(IMAGE_NAME):$(IMAGE_TAG)
+	docker push $(OTC_SWR_ENDPOINT)/$(OTC_SWR_ORGANIZATION)/$(IMAGE_NAME):$(IMAGE_TAG)
 
 docker_all: build docker_build docker_push
 
