@@ -1,10 +1,11 @@
 SHELL:=/bin/bash
 TARGET_PATH=target
-DOCKER_FILE=Dockerfile
+# DOCKER_FILE=Dockerfile
+DOCKER_FILE=docker_nginx/Dockerfile_nginx
 
 IMAGE_NAME=notes-app-laravel-php
 
-IMAGE_TAG := "v-$(shell date +%Y%m%d%H%M%S)"
+IMAGE_TAG := "v-$(shell date +%Y%m%d%H%M%S)-n"
 
 build: clean
 
