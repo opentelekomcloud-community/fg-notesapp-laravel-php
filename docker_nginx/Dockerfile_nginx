@@ -1,0 +1,58 @@
+FROM composer:2 AS vendor
+WORKDIR /app
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-scripts --no-interaction --prefer-dist --optimize-autoloader --ignore-platform-reqs
+
+FROM node:22-bookworm-slim AS assets
+WORKDIR /app
+ARG GIT_COMMIT
+ENV GIT_COMMIT=$GIT_COMMIT
+COPY package.json package-lock.json .npmrc ./
+RUN npm ci
+COPY . .
+COPY --from=vendor /app/vendor ./vendor
+RUN npm run build
+
+FROM php:8.3-fpm-alpine
+RUN apk add --no-cache libpq nginx supervisor \
+    && apk add --no-cache --virtual .build-deps postgresql-dev \
+    && docker-php-ext-install pdo_pgsql opcache \
+    && apk del .build-deps
+
+WORKDIR /app
+COPY . .
+COPY --from=vendor /app/vendor ./vendor
+COPY --from=assets /app/public/build ./public/build
+COPY docker_nginx/nginx.conf /etc/nginx/nginx.conf
+COPY docker_nginx/supervisord.conf /etc/supervisord.conf
+COPY docker_nginx/entrypoint-nginx.sh /entrypoint-nginx.sh
+RUN sed -i \
+        -e '/^user = /d' \
+        -e '/^group = /d' \
+        -e 's|^listen = 9000$|listen = 127.0.0.1:9000|' \
+        /usr/local/etc/php-fpm.d/www.conf \
+    && sed -i 's|^;pid = run/php-fpm.pid|pid = /tmp/php-fpm.pid|' /usr/local/etc/php-fpm.conf \
+    && printf '\nclear_env = no\n' >> /usr/local/etc/php-fpm.d/www.conf \
+    && chown -R 1003:1003 /app \
+    && chmod +x /entrypoint-nginx.sh
+USER 1003:1003
+
+ENV APP_ENV=production \
+    TZ=UTC \
+    APP_DEBUG=false \
+    LOG_CHANNEL=stderr \
+    DB_CONNECTION=pgsql \
+    DB_PORT=5432 \
+    SESSION_DRIVER=database \
+    CACHE_STORE=database \
+    QUEUE_CONNECTION=sync \
+    VIEW_COMPILED_PATH=/tmp/views \
+    APP_SERVICES_CACHE=/tmp/services.php \
+    APP_PACKAGES_CACHE=/tmp/packages.php \
+    APP_CONFIG_CACHE=/tmp/config.php \
+    APP_ROUTES_CACHE=/tmp/routes.php \
+    APP_EVENTS_CACHE=/tmp/events.php \
+    RUN_MIGRATIONS=true
+
+EXPOSE 8000
+CMD ["/entrypoint-nginx.sh"]

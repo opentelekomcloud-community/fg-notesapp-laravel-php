@@ -4,6 +4,7 @@ use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
 use Monolog\Processor\PsrLogMessageProcessor;
+use Monolog\Formatter\LineFormatter;
 
 return [
 
@@ -109,7 +110,11 @@ return [
             'handler_with' => [
                 'stream' => 'php://stderr',
             ],
-            'formatter' => env('LOG_STDERR_FORMATTER'),
+            // 'formatter' => env('LOG_STDERR_FORMATTER'),
+            'formatter' => LineFormatter::class,
+            'formatter_with' => [
+                'dateFormat' => 'Y-m-d\TH:i:s.v\Z',
+            ],            
             'processors' => [PsrLogMessageProcessor::class],
         ],
 
