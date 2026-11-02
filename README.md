@@ -182,6 +182,16 @@ To deploy use:
 make -f MakefileTF tf_apply
 ```
 
+### Update FunctionGraph code
+
+To update FunctionGraph code with image use:
+
+```bash
+make -f MakefileTF update_fg_image
+```
+
+
+
 
 > Warranty Disclaimer
 > -------------------
