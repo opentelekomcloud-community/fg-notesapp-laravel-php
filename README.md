@@ -14,18 +14,18 @@ Additional software needed:
 For further setup see [README_SETUP.md](./README_SETUP.md).
 
 
-## Deploy to FunctionGraph
+## Deploy to FunctionGraph using console
 
 ### Prerequisites
 
 #### Resources on T Cloud Public
 
-- API Gateway created
-- RDS Instance created
-- SWR created
+Following resources must exist on T Cloud Public:
+- RDS (Postgres Database)
+- API Gateway
+- SWR (Software Repository for Container)
 
 All in same VPC and Subnet.
-
 
 #### Local PC - Environment variables
 
@@ -122,14 +122,17 @@ An agency with following permissions is needed:
 - Dynamic Memory: enable
 - Include Keys: enable
 
-## Terraform deployment
+
+## Deploy to FunctionGraph using Terraform
 
 You can deploy project using terraform.
 
 Following resources must exist on T Cloud Public:
 - RDS (Postgres Database)
-- VPC and Subnet
 - API Gateway
+- SWR (Software Repository for Container)
+
+All in same VPC and Subnet.
 
 ### Configuration
 
