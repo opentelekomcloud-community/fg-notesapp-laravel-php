@@ -57,7 +57,7 @@ tf_destroy:
 		-var-file="variables.tfvars" \
 		-var="image_url=$(OTC_SWR_ENDPOINT)/$(OTC_SWR_ORGANIZATION)/$(IMAGE_NAME):$(IMAGE_TAG)"
 
-# use this target to update the Function Graph image
+# use this target to update the FunctionGraph image
 update_fg_image: docker_push
   # getting Token for authentication from Username/Password and function URN...
 	@set -e; \

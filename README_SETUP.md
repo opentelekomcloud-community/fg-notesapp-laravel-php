@@ -44,7 +44,6 @@ node -v
 ## 2. Create the Laravel project
 
 ```bash
-cd /home/hsack/php
 composer create-project laravel/laravel notes-app
 cd notes-app
 ```

@@ -11,9 +11,6 @@ resource "opentelekomcloud_fgs_function_v2" "MyFunction" {
   code_type = "Custom-Image-Swr"
   runtime   = "http"
 
-  # initializer_handler = "-"
-  # initializer_timeout = 30
-
   custom_image {
     url = var.image_url
   }
@@ -21,7 +18,7 @@ resource "opentelekomcloud_fgs_function_v2" "MyFunction" {
   description      = var.description
   memory_size      = 256
   timeout          = 300
-  max_instance_num = 400
+  max_instance_num = 50
   enable_dynamic_memory = "true"
 
   # if you need security access key, security secret key and security token

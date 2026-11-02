@@ -2,8 +2,6 @@
 
 Example on how to host a [Laravel](https://laravel.com/) web application on **T Cloud Public** FunctionGraph.
 
-
-
 ## Development Environment
 
 This sample was written using WSL2 and Ubuntu-22.04 distribution but might also work on other Linux versions.
@@ -12,7 +10,6 @@ The used IDE is vscode,
 
 Additional software needed:
 - Docker
-
 
 For further setup see [README_SETUP.md](./README_SETUP.md).
 
@@ -124,6 +121,63 @@ An agency with following permissions is needed:
 
 - Dynamic Memory: enable
 - Include Keys: enable
+
+## Terraform deployment
+
+You can deploy project using terraform.
+
+Following resources must exist on T Cloud Public:
+- RDS (Postgres Database)
+- VPC and Subnet
+- API Gateway
+
+### Configuration
+
+1. Create a terraform/variables.auto.tf and set following values:
+
+    ```bash
+    # API Gateway instance ID
+    API_GATEWAY_INSTANCE_ID =
+    # VPC ID
+    VPC_ID =
+    # Subnet ID 
+    NETWORK_ID = 
+    # Database name, e.g. notestf
+    DB_DATABASE = "notestf"
+    # RDS Host
+    DB_HOST = 
+    # Port of RDS
+    DB_PORT = "5432"
+    # db user
+    DB_USERNAME = "root"
+    # Password of db user 
+    DB_PASSWORD = 
+    # Laravel APP KEY
+    APP_KEY = 
+    # comma separated list of admin user emails
+    ADMIN_EMAILS = "admin@company.com"
+    ```
+
+2. Adapt MakefileTF
+
+```make
+# Terraform backend configuration
+# bucket for tf states
+BACKEND_CONFIG_BUCKET := 
+# key for tf state, e.g. "terraform_state/php/fg-notesapp-laravel-php.tf"
+BACKEND_CONFIG_KEY := 
+# Region e.g. "eu-de"
+BACKEND_CONFIG_REGION := "eu-de"
+# obs endpoint
+BACKEND_CONFIG_ENDPOINTS := "endpoints={s3=\"https://obs.eu-de.otc.t-systems.com\"}"
+```
+
+### Deploy
+To deploy use:
+
+```bash
+make -f MakefileTF tf_apply
+```
 
 
 > Warranty Disclaimer
