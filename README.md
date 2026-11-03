@@ -2,6 +2,40 @@
 
 Example on how to host a [Laravel](https://laravel.com/) web application on **T Cloud Public** FunctionGraph.
 
+The app lets users create, edit, search, pin, and delete notes, with authentication and per-user access control.
+
+It uses following T Cloud Public resources:
+
+- FunctionGraph HTTP function
+- Relation Database Service (RDS)
+- Log Tank Service (LTS)
+- API Gateway (APIG)
+- Software Repository for Container (SWR)
+
+
+## Contents
+
+- [fg-notesapp-laravel-php](#fg-notesapp-laravel-php)
+  - [Contents](#contents)
+  - [Development Environment](#development-environment)
+  - [Deploy to FunctionGraph via Console](#deploy-to-functiongraph-via-console)
+    - [Prerequisites](#prerequisites)
+      - [Resources on T Cloud Public](#resources-on-t-cloud-public)
+      - [Local PC - Environment variables](#local-pc---environment-variables)
+    - [Build and Push Docker Image](#build-and-push-docker-image)
+    - [Configure FunctionGraph](#configure-functiongraph)
+      - [Basic Settings](#basic-settings)
+      - [Triggers](#triggers)
+      - [Permissions](#permissions)
+      - [Network](#network)
+      - [Environment Variables](#environment-variables)
+      - [Logs](#logs)
+      - [Advanced Settings](#advanced-settings)
+  - [Deploy to FunctionGraph with Terraform](#deploy-to-functiongraph-with-terraform)
+    - [Configuration](#configuration)
+    - [Deploy](#deploy)
+    - [Update FunctionGraph code](#update-functiongraph-code)
+
 ## Development Environment
 
 This sample was written using WSL2 and Ubuntu-22.04 distribution but might also work on other Linux versions.
@@ -14,7 +48,7 @@ Additional software needed:
 For further setup see [README_SETUP.md](./README_SETUP.md).
 
 
-## Deploy to FunctionGraph using console
+## Deploy to FunctionGraph via Console
 
 ### Prerequisites
 
@@ -43,7 +77,7 @@ For SWR variables, see: [Obtaining a Long-Term Valid Login Command for SWR](http
 
 
 
-### Create docker image
+### Build and Push Docker Image
 
 Check and adapt [Makefile](./Makefile).
 
@@ -53,7 +87,7 @@ In project root execute
 make docker_push
 ```
 
-### Create FunctionGraph
+### Configure FunctionGraph
 
 Create Function as **Container Image** -  **HTTP Function**
 
@@ -123,7 +157,7 @@ An agency with following permissions is needed:
 - Include Keys: enable
 
 
-## Deploy to FunctionGraph using Terraform
+## Deploy to FunctionGraph with Terraform
 
 You can deploy project using terraform.
 
@@ -136,7 +170,7 @@ All in same VPC and Subnet.
 
 ### Configuration
 
-1. Create a terraform/variables.auto.tf and set following values:
+1. Create a `terraform/variables.auto.tf` and set following values:
 
     ```bash
     # API Gateway instance ID
@@ -158,8 +192,11 @@ All in same VPC and Subnet.
     # Laravel APP KEY
     APP_KEY = 
     # comma separated list of admin user emails
-    ADMIN_EMAILS = "admin@company.com"
+    ADMIN_EMAILS = "admin@company.com"    
     ```
+
+    > [!WARNING]
+    > Do not commit this file as it contains credentials
 
 2. Adapt MakefileTF
 
@@ -191,12 +228,12 @@ make -f MakefileTF update_fg_image
 ```
 
 
-
-
 > Warranty Disclaimer
 > -------------------
-> THE OPEN SOURCE SOFTWARE IN THIS PRODUCT IS DISTRIBUTED IN THE HOPE THAT IT
-> WILL BE USEFUL,BUT WITHOUT ANY WARRANTY; WITHOUT EVEN THE IMPLIED WARRANTY
-> OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
-> 
-> SEE THE APPLICABLE LICENSES FOR MORE DETAILS.
+> THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+> INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
+> PARTICULAR PURPOSE AND NONINFRINGEMENT. 
+> IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+> DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, 
+> ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+> DEALINGS IN THE SOFTWARE.
