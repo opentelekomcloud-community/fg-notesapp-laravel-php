@@ -95,7 +95,7 @@ Create Function as **Container Image** -  **HTTP Function**
 - Function name: your function name
 - Enterprise project: default
 - Agency: see below
-- Container Image:  
+- Container Image:  notes-app-laravel-php:${IAMGE_TAG}
 
 #### Basic Settings
 
@@ -107,7 +107,7 @@ Create Function as **Container Image** -  **HTTP Function**
 
 API Gateway Trigger:
 
-- API Group: 
+- API Group: APIGroup_php_notes_app
 - Environment: RELEASE
 - Security Authentication: NONE
 - Matching: Prefix match
@@ -126,8 +126,8 @@ An agency with following permissions is needed:
 #### Network
 
 - VPC Access: enabled
-- VPC: same as RDS database
-- Subnet: same as RDS database
+- VPC: same as RDS database / SWR / APIG
+- Subnet: same as RDS database / SWR / APIG
 
 #### Environment Variables
 
