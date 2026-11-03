@@ -1,0 +1,16 @@
+{
+	"mcpServers": {
+		"laravel-boost": {
+			"type": "stdio",
+			"command": "wsl.exe",
+			"args": [
+        "bash",
+        "-lc",
+				"exec /usr/bin/php8.3 ~/github/opentelekomcloud-community/fg-notesapp-laravel-php/artisan boost:mcp"
+			],
+			"tools": [
+				"*"
+			]
+		}
+	}
+}
