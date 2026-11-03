@@ -39,194 +39,40 @@ nvm alias default 22
 node -v
 ```
 
----
+## 2. Configuration
 
-## 2. Create the Laravel project
+### Update `.env`
 
-```bash
-composer create-project laravel/laravel notes-app
-cd notes-app
+Use `.env.example` as starting point and copy
+this file to `.env`.
+
+```
+cp .env.example .env
 ```
 
-## 3. Install Breeze with Inertia + Vue
+Adapt values to your needs.
 
-```bash
-composer require laravel/breeze --dev
-php artisan breeze:install vue
+To generate an APP_KEY use:
+
+```
+php artisan key:generate
 ```
 
-### Fix: remove the `bootstrap` import
+`ADMIN_EMAILS` is a comma separated list of email addresses for admin users.
 
-Laravel 13 no longer ships `resources/js/bootstrap.js`, but Breeze still imports it. Remove this line from `resources/js/app.js`:
 
-```js
-import './bootstrap';
-```
+## 3. Build, Run, Test
 
-If `npm install` ran under an old Node version, reinstall:
+### Run migration
 
-```bash
-rm -rf node_modules package-lock.json
-npm install
-```
-
----
-
-## 4. Notes feature
-
-### 4.1 Generate model, migration, factory and policy
-
-```bash
-php artisan make:model Note -mf
-php artisan make:policy NotePolicy --model=Note
-```
-
-### 4.2 Migration – `database/migrations/xxxx_create_notes_table.php`
-
-```php
-Schema::create('notes', function (Blueprint $table) {
-    $table->id();
-    $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-    $table->string('title');
-    $table->text('body')->nullable();
-    $table->boolean('pinned')->default(false);
-    $table->timestamps();
-
-    $table->index(['user_id', 'pinned', 'updated_at']);
-});
-```
-
-### 4.3 Model – `app/Models/Note.php`
-
-```php
-#[Fillable(['title', 'body', 'pinned'])]
-class Note extends Model
-{
-    use HasFactory;
-
-    protected function casts(): array
-    {
-        return ['pinned' => 'boolean'];
-    }
-
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
-}
-```
-
-Add the relation to `app/Models/User.php`:
-
-```php
-public function notes(): HasMany
-{
-    return $this->hasMany(Note::class);
-}
-```
-
-### 4.4 Factory – `database/factories/NoteFactory.php`
-
-```php
-return [
-    'user_id' => User::factory(),
-    'title' => fake()->sentence(4),
-    'body' => fake()->paragraphs(3, true),
-    'pinned' => false,
-];
-```
-
-### 4.5 Policy – `app/Policies/NotePolicy.php`
-
-Only the owner may view, update or delete a note:
-
-```php
-public function view(User $user, Note $note): bool   { return $note->user_id === $user->id; }
-public function update(User $user, Note $note): bool { return $note->user_id === $user->id; }
-public function delete(User $user, Note $note): bool { return $note->user_id === $user->id; }
-```
-
-### 4.6 Controller – `app/Http/Controllers/NoteController.php`
-
-Actions: `index` (search + pinned-first + pagination), `create`, `store`, `edit`, `update`, `togglePin`, `destroy`. Every action on an existing note calls `Gate::authorize(...)`, and input is validated:
-
-```php
-$request->validate([
-    'title' => ['required', 'string', 'max:255'],
-    'body' => ['nullable', 'string', 'max:65535'],
-    'pinned' => ['boolean'],
-]);
-```
-
-See the file for the full implementation.
-
-### 4.7 Routes – `routes/web.php`
-
-Replace the default dashboard route with:
-
-```php
-use App\Http\Controllers\NoteController;
-
-Route::redirect('/dashboard', '/notes')->name('dashboard');
-
-Route::middleware(['auth', 'verified'])->group(function () {
-    Route::resource('notes', NoteController::class)->except('show');
-    Route::patch('/notes/{note}/pin', [NoteController::class, 'togglePin'])->name('notes.pin');
-});
-```
-
-### 4.8 Share flash messages – `app/Http/Middleware/HandleInertiaRequests.php`
-
-```php
-'flash' => [
-    'success' => fn () => $request->session()->get('success'),
-],
-```
-
-### 4.9 Vue pages
-
-- `resources/js/Pages/Notes/Index.vue` – note grid, debounced search, pin toggle, delete, pagination.
-- `resources/js/Pages/Notes/Form.vue` – shared create/edit form using Inertia `useForm`.
-- `resources/js/Layouts/AuthenticatedLayout.vue` – replace the "Dashboard" nav links with `route('notes.index')` / label "Notes".
-- Delete the unused `resources/js/Pages/Dashboard.vue`.
-
-### 4.10 Feature tests – `tests/Feature/NoteTest.php`
-
-Covers CRUD, ownership (403 for other users) and validation.
-
----
-
-## 5. Database (PostgreSQL)
-
-Create a database and user:
-
-```bash
-sudo -u postgres psql -c "CREATE USER notes WITH PASSWORD 'secret';"
-sudo -u postgres psql -c "CREATE DATABASE notes OWNER notes;"
-```
-
-Update `.env`:
-
-```dotenv
-DB_CONNECTION=pgsql
-DB_HOST=127.0.0.1
-DB_PORT=5432
-DB_DATABASE=notes
-DB_USERNAME=notes
-DB_PASSWORD=secret
-```
-
-Then run the migrations:
+Run the migration to setup database:
 
 ```bash
 php artisan migrate
 ```
 
-Note search uses `whereLike`, which is case-insensitive on PostgreSQL (`ILIKE`).
 
----
-
-## 6. Build and run
+### Build and run
 
 Production build:
 
@@ -246,9 +92,12 @@ Or both at once: `composer run dev`.
 
 Open http://localhost:8000, register an account, and start taking notes.
 
+Laravel logs can be found in: [storage/logs/laravel.log](storage/logs/laravel.log)
+
+
 ---
 
-## 7. Tests
+### Tests
 
 ```bash
 php artisan test
