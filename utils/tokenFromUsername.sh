@@ -95,7 +95,13 @@ fi
 
 fail() {
   echo "$1" >&2
-  return 1 2>/dev/null || exit 1
+  # 'return' aborts the function before '|| exit 1' could run, so detect the
+  # context explicitly: return 1 when sourced, exit 1 when executed
+  if (return 0) 2>/dev/null; then
+    return 1
+  else
+    exit 1
+  fi
 }
 
 # Make the API call 

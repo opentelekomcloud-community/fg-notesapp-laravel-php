@@ -11,8 +11,37 @@ BACKEND_CONFIG_ENDPOINTS := "endpoints={s3=\"https://obs.eu-de.otc.t-systems.com
 
 CURRENT_MAKEFILE := $(firstword $(MAKEFILE_LIST))
 
+# Terraform needs two kinds of credentials from the environment:
+#   - S3/OBS backend: AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY (see backend block in terraform/provider.tf)
+#   - opentelekomcloud provider vars: injected as TF_VAR_<name> (see variables in terraform/provider.tf)
+#
+# If the OTC SDK keys are in the environment, derive everything from them
+# unconditionally.
+# OBS rejects the x-amz-content-sha256 request-checksum header that newer
+# AWS SDK versions send for S3 PutObject (XAmzContentSHA256Mismatch).
+# 'when_required' is the most restrictive value Terraform accepts
+# (it only allows when_supported/when_required).
+export AWS_REQUEST_CHECKSUM_CALCULATION ?= when_required
+
+# If they are not set, any real AWS_* / TF_VAR_* env vars are used as-is.
+ifneq ($(strip $(OTC_SDK_AK))$(strip $(OTC_SDK_SK)),)
+export AWS_ACCESS_KEY_ID          := $(OTC_SDK_AK)
+export AWS_SECRET_ACCESS_KEY      := $(OTC_SDK_SK)
+export TF_VAR_OTC_SDK_AK          := $(OTC_SDK_AK)
+export TF_VAR_OTC_SDK_SK          := $(OTC_SDK_SK)
+export TF_VAR_OTC_SDK_DOMAIN_NAME := $(OTC_DOMAIN_NAME)
+export TF_VAR_OTC_SDK_PROJECTID   := $(OTC_SDK_PROJECTID)
+export TF_VAR_OTC_SDK_PROJECTNAME := $(OTC_SDK_PROJECTNAME)
+endif
+
 # Terraform initialization
 tf_init:
+	@ak_len=$${#OTC_SDK_AK}; sk_len=$${#OTC_SDK_SK}; aws_len=$${#AWS_ACCESS_KEY_ID}; \
+	  echo "credential lengths: OTC_SDK_AK=$$ak_len OTC_SDK_SK=$$sk_len AWS_ACCESS_KEY_ID=$$aws_len"; \
+	  if [ "$$ak_len" -eq 0 ] && [ "$$aws_len" -eq 0 ]; then \
+	    echo "ERROR: no credentials for the OBS backend. Export OTC_SDK_AK + OTC_SDK_SK (plus OTC_SDK_PROJECTNAME, OTC_SDK_PROJECTID, OTC_DOMAIN_NAME), or set AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY directly." >&2; \
+	    exit 1; \
+	  fi
 	terraform -chdir=terraform \
 	  init \
 	  -backend-config=$(BACKEND_CONFIG_ENDPOINTS) \
@@ -40,15 +69,23 @@ tf_apply: docker_push
 	  -var-file="variables.tfvars" \
 		-var="image_url=$(OTC_SWR_ENDPOINT)/$(OTC_SWR_ORGANIZATION)/$(IMAGE_NAME):$(IMAGE_TAG)"
 
-# Terraform update without pushing a new Docker image
-tf_apply_no_push: 
+# Terraform update without pushing a new Docker image.
+# Reuses the image URL currently in the terraform state (MY_FUNCTION_IMAGE),
+# because IMAGE_TAG is a fresh timestamp that was never pushed to SWR.
+tf_apply_no_push:
 	if [ ! -f "terraform/.terraform.lock.hcl" ]; then \
 		$(MAKE) -f $(CURRENT_MAKEFILE) tf_init; \
 	fi
+	@image_url=$$(terraform -chdir=terraform state show -no-color opentelekomcloud_fgs_function_v2.MyFunction 2>/dev/null | sed -n "s/^[[:space:]]*url[[:space:]]*=[[:space:]]*\"\(.*\)\"[[:space:]]*$$/\1/p" | head -1); \
+	if [ -z "$$image_url" ]; then \
+	  echo "ERROR: no image in state yet - run 'make -f $(CURRENT_MAKEFILE) tf_apply' first" >&2; \
+	  exit 1; \
+	fi; \
+	echo "reusing image: $$image_url"; \
 	terraform -chdir=terraform \
 	  apply -auto-approve \
 	  -var-file="variables.tfvars" \
-		-var="image_url=$(OTC_SWR_ENDPOINT)/$(OTC_SWR_ORGANIZATION)/$(IMAGE_NAME):$(IMAGE_TAG)"
+	  -var="image_url=$$image_url"
 
 # Terraform destroy target
 tf_destroy:
@@ -58,10 +95,14 @@ tf_destroy:
 		-var="image_url=$(OTC_SWR_ENDPOINT)/$(OTC_SWR_ORGANIZATION)/$(IMAGE_NAME):$(IMAGE_TAG)"
 
 # use this target to update the FunctionGraph image
+# NOTE: no '#'-lines inside the backslash-continued recipe below - make would
+# treat them as comments and split the command into separate shells
 update_fg_image: docker_push
   # getting Token for authentication from Username/Password and function URN...
+  # injects the pushed image into custom_image.image (REST name; terraform uses "url")
+  # and prints only the image line (the full config contains user_data with DB_PASSWORD/APP_KEY)
 	@set -e; \
-	OTC_TOKEN=$$(../../utils/tokenFromUsername.sh); \
+	OTC_TOKEN=$$(utils/tokenFromUsername.sh); \
 	MY_FUNCTION_URN=$$(terraform -chdir=terraform output -raw MY_FUNCTION_URN); \
 	CONFIG_URL="https://functiongraph.$(OTC_SDK_REGION).otc.t-systems.com/v2/$(OTC_SDK_PROJECTID)/fgs/functions/$$MY_FUNCTION_URN/config"; \
 	echo "Fetching Function Config from $$CONFIG_URL"; \
@@ -69,14 +110,14 @@ update_fg_image: docker_push
 	  -H "Content-Type: application/json" \
 	  -H "x-auth-token: $$OTC_TOKEN" \
 	  "$$CONFIG_URL"); \
-	echo "Updating $$config"; \
-	updated_config=$$(printf '%s\n' "$$config" | jq 'del(.type, .log_group_id, .log_stream_id, .enable_lts_log)'); \
-	echo "Updated Function Config: $$updated_config"; \
+	updated_config=$$(printf '%s\n' "$$config" | jq --arg image_url "$(OTC_SWR_ENDPOINT)/$(OTC_SWR_ORGANIZATION)/$(IMAGE_NAME):$(IMAGE_TAG)" 'del(.type, .log_group_id, .log_stream_id, .enable_lts_log) | .custom_image.image = $$image_url'); \
+	echo "Function config image set to: $$(printf '%s' "$$updated_config" | jq -r '.custom_image.image')"; \
 	curl -X PUT \
 	 -H "Content-Type: application/json" \
 	 -H "x-auth-token: $$OTC_TOKEN" \
 	 -d "$$updated_config" \
-	 "$$CONFIG_URL";
+	 "$$CONFIG_URL"; \
+	echo "NOTE: the Terraform state still points at the previous image - re-sync it with 'make -f $(CURRENT_MAKEFILE) tf_apply IMAGE_TAG=$(IMAGE_TAG)'";
 
 
 .PHONY: tf_init tf_plan tf_apply tf_destroy tf_apply_no_push update_fg_image

@@ -39,7 +39,21 @@ nvm alias default 22
 node -v
 ```
 
-## 2. Configuration
+## 2. Installation of dependencies
+
+### PHP project dependencies
+
+```
+composer install
+```
+
+### Node.js project dependencies
+
+```
+npm install
+```
+
+## 3. Configuration
 
 ### Update `.env`
 
@@ -61,7 +75,7 @@ php artisan key:generate
 `ADMIN_EMAILS` is a comma separated list of email addresses for admin users.
 
 
-## 3. Build, Run, Test
+## 4. Build, Run, Test
 
 ### Run migration
 

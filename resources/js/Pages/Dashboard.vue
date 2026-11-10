@@ -1,5 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import PrimaryButton from '@/Components/PrimaryButton.vue';
 import { Head, Link } from '@inertiajs/vue3';
 import { ArrowRight, FileText, Pin, Plus } from '@lucide/vue';
 
@@ -24,12 +25,11 @@ const formatDate = (value) =>
                 <h2 class="text-xl font-semibold leading-tight text-gray-800">
                     Dashboard
                 </h2>
-                <Link
-                    :href="route('notes.create')"
-                    class="inline-flex items-center gap-2 rounded-md border border-transparent bg-gray-800 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                >
-                    <Plus class="h-4 w-4" aria-hidden="true" />
-                    New note
+                <Link :href="route('notes.create')">
+                    <PrimaryButton>
+                        <Plus class="h-4 w-4" aria-hidden="true" />
+                        <span>New note</span>
+                    </PrimaryButton>
                 </Link>
             </div>
         </template>

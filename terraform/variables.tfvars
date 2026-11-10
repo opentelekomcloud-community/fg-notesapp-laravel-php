@@ -10,4 +10,4 @@ function_name = "notes-app-laravel-php"
 # resources will be tagged with this app_group tag
 tag_app_group = "notes-app-laravel-php"
 
-RUN_MIGRATIONS = "false"
+RUN_MIGRATIONS = "true"
