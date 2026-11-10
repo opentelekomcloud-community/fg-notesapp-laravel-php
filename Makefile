@@ -54,7 +54,7 @@ docker_run_local: docker_build
 docker_push: docker_build
   # see: https://docs.otc.t-systems.com/software-repository-container/umn/image_management/obtaining_a_long-term_valid_login_command.html#swr-01-1000
 	# @ keeps the recipe (with credentials) out of make's output
-	@docker login -u $(OTC_SDK_PROJECTNAME)@$(OTC_SDK_AK) -p $(OTC_SWR_LOGIN_KEY) $(OTC_SWR_ENDPOINT)
+	@printf '%s' '$(OTC_SWR_LOGIN_KEY)' | podman login --username '$(OTC_SDK_PROJECTNAME)@$(OTC_SDK_AK)' --password-stdin $(OTC_SWR_ENDPOINT)
 	docker tag $(IMAGE_NAME):$(IMAGE_TAG) $(OTC_SWR_ENDPOINT)/$(OTC_SWR_ORGANIZATION)/$(IMAGE_NAME):$(IMAGE_TAG)
 	docker push $(OTC_SWR_ENDPOINT)/$(OTC_SWR_ORGANIZATION)/$(IMAGE_NAME):$(IMAGE_TAG)
 
