@@ -46,7 +46,7 @@ resource "opentelekomcloud_apigw_api_v2" "api1" {
   security_authentication_type = "NONE"
 
   # TRIGGER-MATCH_MODE: SWA
-  match_mode       = "PREFIX"
+  match_mode = "PREFIX"
 
   success_response = "Success response"
   failure_response = "Failed response"
@@ -65,7 +65,7 @@ resource "opentelekomcloud_apigw_api_v2" "api1" {
 ##########################################################
 # Publish API to specific environment
 ##########################################################
-resource "opentelekomcloud_apigw_api_publishment_v2" "default" {  
+resource "opentelekomcloud_apigw_api_publishment_v2" "default" {
   gateway_id     = local.API_GATEWAY_INSTANCE_ID
   environment_id = local.ENV_ID
   api_id         = opentelekomcloud_apigw_api_v2.api1.id
@@ -82,8 +82,8 @@ resource "opentelekomcloud_apigw_api_publishment_v2" "default" {
 
 output "API_GATEWAY_TRIGGER_URL" {
   description = "The URL of the API Gateway triggering the FunctionGraph function"
-  value       = format("https://%s.apic.%s.otc.t-systems.com", 
-                opentelekomcloud_apigw_group_v2.group1.id , 
-                opentelekomcloud_apigw_group_v2.group1.region)
-  
+  value = format("https://%s.apic.%s.otc.t-systems.com",
+    opentelekomcloud_apigw_group_v2.group1.id,
+  opentelekomcloud_apigw_group_v2.group1.region)
+
 }

@@ -1,5 +1,5 @@
 # prefix of all resources
-prefix        = "php"
+prefix = "php"
 
 # description of the function
 description = "Sample notes-app-laravel-php"

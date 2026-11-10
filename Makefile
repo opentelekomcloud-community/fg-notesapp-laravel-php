@@ -12,10 +12,11 @@ IMAGE_TAG := "v-$(shell date +%Y%m%d%H%M%S)-n"
 
 # Local dev DB settings for docker_run_local (override via environment or command line)
 # Dev default: SQLite file inside the container (ephemeral; migrations run on start)
-DB_CONNECTION ?= sqlite
-DB_DATABASE ?= /app/database/database.sqlite
+# DB_CONNECTION ?= sqlite
+# DB_DATABASE ?= /app/database/database.sqlite
 DB_HOST ?= 127.0.0.1
 DB_PORT ?= 5432
+DB_DATABASE ?= notes
 DB_USERNAME ?= postgres
 DB_PASSWORD ?=
 APP_KEY ?=
@@ -40,6 +41,7 @@ docker_run_local: docker_build
 		--platform linux/amd64 \
 		--publish 8000:8000 \
 		--user 1003:1003 \
+		--name $(IMAGE_NAME) \
 		--env DB_CONNECTION=$(DB_CONNECTION) \
 		--env DB_HOST=$(DB_HOST) \
 		--env DB_PORT=$(DB_PORT) \
