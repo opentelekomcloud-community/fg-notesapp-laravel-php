@@ -7,27 +7,30 @@ The app lets users create, edit, search, pin, and delete notes, with authenticat
 
 ## Contents
 
-- [What Is Demonstrated](#what-is-demonstrated)
-- [Overview](#overview)
-- [Development Environment](#development-environment)
-- [Deploy to FunctionGraph via Console](#deploy-to-functiongraph-via-console)
-  - [Prerequisites](#prerequisites)
-    - [Resources on T Cloud Public](#resources-on-t-cloud-public)
-    - [Local PC - Environment variables](#local-pc---environment-variables)
-  - [Build and Push Docker Image](#build-and-push-docker-image)
-  - [Configure FunctionGraph](#configure-functiongraph)
-    - [Basic Settings](#basic-settings)
-    - [Triggers](#triggers)
-    - [Permissions](#permissions)
-    - [Network](#network)
-    - [Environment Variables](#environment-variables)
-    - [Logs](#logs)
-    - [Advanced Settings](#advanced-settings)
-- [Deploy to FunctionGraph with Terraform](#deploy-to-functiongraph-with-terraform)
-  - [Configuration](#configuration)
-  - [Deploy](#deploy)
-  - [Update FunctionGraph Code](#update-functiongraph-code)
-  - [Update Terraform Deployment Without Pushing a New Image](#update-terraform-deployment-without-pushing-a-new-image)
+- [fg-notesapp-laravel-php](#fg-notesapp-laravel-php)
+  - [Contents](#contents)
+  - [What Is Demonstrated](#what-is-demonstrated)
+  - [Overview](#overview)
+    - [HTTP endpoints](#http-endpoints)
+  - [Development Environment](#development-environment)
+  - [Deploy to FunctionGraph via Console](#deploy-to-functiongraph-via-console)
+    - [Prerequisites](#prerequisites)
+      - [Resources on T Cloud Public](#resources-on-t-cloud-public)
+      - [Local PC - Environment variables](#local-pc---environment-variables)
+    - [Build and Push Docker Image](#build-and-push-docker-image)
+    - [Configure FunctionGraph](#configure-functiongraph)
+      - [Basic Settings](#basic-settings)
+      - [Triggers](#triggers)
+      - [Permissions](#permissions)
+      - [Network](#network)
+      - [Environment Variables](#environment-variables)
+      - [Logs](#logs)
+      - [Advanced Settings](#advanced-settings)
+  - [Deploy to FunctionGraph with Terraform](#deploy-to-functiongraph-with-terraform)
+    - [Configuration](#configuration)
+    - [Deploy](#deploy)
+    - [Update FunctionGraph code](#update-functiongraph-code)
+    - [Update Terraform Deployment Without Pushing a New Image](#update-terraform-deployment-without-pushing-a-new-image)
 
 ## What Is Demonstrated
 
@@ -43,46 +46,8 @@ The app lets users create, edit, search, pin, and delete notes, with authenticat
 
 ## Overview
 
-```mermaid
-%%{init: {"theme": "default", "themeVariables": {"primaryColor": "#fdf4ff", "primaryBorderColor": "#E20074", "primaryTextColor": "#000000", "textColor": "#000000", "nodeTextColor": "#000000", "titleColor": "#000000", "lineColor": "#E20074", "edgeLabelBackground": "#ffffff", "secondaryColor": "#ffffff", "tertiaryColor": "#ffffff", "clusterBkg": "#ffffff", "clusterBorder": "#E20074"}}}%%
-flowchart LR
-    subgraph Browser["Browser"]
-        UI["Inertia + Vue 3 SPA<br/>(resources/js: Auth, Notes,<br/>Dashboard, Profile, Admin)"]
-    end
+![image](./screenshots/architecture.drawio.svg)
 
-    subgraph Cloud["T Cloud Public (eu-de)"]
-        subgraph APISub["API Gateway (APIG)"]
-            APIG["Public API group<br/>prefix /, any method,<br/>HTTPS"]
-        end
-
-        subgraph VPCbox["VPC + subnet (192.168.1.0/24)<br/>security-group rule: allow 5432 from subnet"]
-            subgraph FG["FunctionGraph — HTTP function (custom SWR image)"]
-                subgraph Container["Container: php:8.3-fpm-alpine"]
-                    NGINX["nginx<br/>port 8000"]
-                    FPM["php-fpm<br/>127.0.0.1:9000"]
-                    APP["Laravel 11<br/>/app/public"]
-                    NGINX -- "static assets<br/>try_files → index.php" --> APP
-                    NGINX -- "fastcgi_pass" --> FPM
-                    FPM --> APP
-                end
-            end
-
-            RDS["RDS Postgres<br/>database: notestf<br/>port 5432"]
-        end
-
-        SWR["SWR<br/>image: notes-app-laravel-php"]
-        LTS["LTS<br/>log group + stream<br/>(nginx/php-fpm stderr, stdout)"]
-    end
-
-    UI --> APIG --> NGINX
-    APP -- "PDO (pgsql)<br/>DB_HOST from function env" --> RDS
-    SWR -. "pulled on cold start" .-> Container
-    APP -- "stdout/stderr" --> LTS
-
-    style FG stroke:#E20074,stroke-width:3px,fill:none,stroke-linejoin:round
-    style Container stroke:#E20074,stroke-width:2px,fill:none,stroke-linejoin:round
-    style VPCbox stroke:#E20074,stroke-width:2px,fill:none,stroke-dasharray: 5 5
-```
 
 **Request flow.** The browser talks only to the public API Gateway URL; APIG routes every request (prefix `/`) to the FunctionGraph HTTP function. Inside the function, a single container (built by the multi-stage `docker_nginx/Dockerfile_nginx`: a `composer` stage for `vendor/`, a `node` stage for the compiled frontend in `public/build`, and a `php:8.3-fpm-alpine` runtime) runs `supervisord`, which starts **nginx on port 8000** and **php-fpm on 127.0.0.1:9000**. nginx serves the compiled SPA and static assets directly from `/app/public` and proxies `.php` requests to php-fpm, which runs the Laravel application.
 
