@@ -3,6 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { Pin, Plus } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 
 const props = defineProps({
@@ -51,7 +52,10 @@ const formatDate = (value) => new Date(value).toLocaleString();
                     My Notes
                 </h2>
                 <Link :href="route('notes.create')">
-                    <PrimaryButton>New note</PrimaryButton>
+                    <PrimaryButton>
+                        <Plus class="h-4 w-4" aria-hidden="true" />
+                        <span>New note</span>
+                    </PrimaryButton>
                 </Link>
             </div>
         </template>
@@ -86,12 +90,15 @@ const formatDate = (value) => new Date(value).toLocaleString();
                         No notes match "{{ filters.search }}".
                     </template>
                     <template v-else>
-                        You have no notes yet.
-                        <Link
-                            :href="route('notes.create')"
-                            class="text-indigo-600 underline"
-                            >Create your first note</Link
-                        >.
+                        <p>
+                            You have no notes yet.
+                            <Link
+                                :href="route('notes.create')"
+                                class="text-sm font-medium text-indigo-600 hover:text-indigo-800"
+                            >
+                                Create your first note.
+                            </Link>
+                        </p>
                     </template>
                 </div>
 
@@ -105,18 +112,19 @@ const formatDate = (value) => new Date(value).toLocaleString();
                         <div class="flex items-start justify-between gap-2">
                             <Link
                                 :href="route('notes.edit', note.id)"
-                                class="font-semibold text-gray-900 hover:text-indigo-600"
+                                class="text-base font-semibold text-gray-900 hover:text-indigo-600"
                             >
                                 {{ note.title }}
                             </Link>
                             <button
                                 type="button"
-                                class="text-lg leading-none"
+                                class="shrink-0"
                                 :class="note.pinned ? 'text-amber-500' : 'text-gray-300 hover:text-amber-400'"
                                 :title="note.pinned ? 'Unpin' : 'Pin'"
                                 @click="togglePin(note)"
                             >
-                                ★
+                                <Pin class="h-4 w-4" :aria-hidden="note.pinned" />
+                                <span class="sr-only">{{ note.pinned ? 'Unpin' : 'Pin' }}</span>
                             </button>
                         </div>
                         <p
@@ -125,7 +133,7 @@ const formatDate = (value) => new Date(value).toLocaleString();
                             {{ excerpt(note.body) }}
                         </p>
                         <div
-                            class="mt-4 flex items-center justify-between text-xs text-gray-400"
+                            class="mt-4 flex items-center justify-between text-sm text-gray-500"
                         >
                             <span>{{ formatDate(note.updated_at) }}</span>
                             <div class="space-x-3">

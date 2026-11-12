@@ -15,10 +15,10 @@ resource "opentelekomcloud_fgs_function_v2" "MyFunction" {
     url = var.image_url
   }
 
-  description      = var.description
-  memory_size      = 256
-  timeout          = 300
-  max_instance_num = 50
+  description           = var.description
+  memory_size           = 256
+  timeout               = 300
+  max_instance_num      = 50
   enable_dynamic_memory = "true"
 
   # if you need security access key, security secret key and security token
@@ -32,30 +32,30 @@ resource "opentelekomcloud_fgs_function_v2" "MyFunction" {
   log_topic_name = opentelekomcloud_lts_stream_v2.MyLogStream.stream_name
 
   # set some environment variables
-  user_data = jsonencode({    
+  user_data = jsonencode({
     "PROJECT_ID" : var.OTC_SDK_PROJECTID,
     "REGION" : split("_", var.OTC_SDK_PROJECTNAME)[0],
-    
+
     "DB_CONNECTION" : "pgsql",
-    "DB_HOST": var.DB_HOST,
-    "DB_PORT": var.DB_PORT,
-    "DB_DATABASE": var.DB_DATABASE,
-    "DB_USERNAME": var.DB_USERNAME,
-    
-    "APP_URL": format("https://%s.apic.%s.otc.t-systems.com/", 
-                opentelekomcloud_apigw_group_v2.group1.id , 
-                opentelekomcloud_apigw_group_v2.group1.region),
-    "RUN_MIGRATIONS": var.RUN_MIGRATIONS,
-    "ADMIN_EMAILS": var.ADMIN_EMAILS,
+    "DB_HOST" : var.DB_HOST,
+    "DB_PORT" : var.DB_PORT,
+    "DB_DATABASE" : var.DB_DATABASE,
+    "DB_USERNAME" : var.DB_USERNAME,
+
+    "APP_URL" : format("https://%s.apic.%s.otc.t-systems.com/",
+      opentelekomcloud_apigw_group_v2.group1.id,
+    opentelekomcloud_apigw_group_v2.group1.region),
+    "RUN_MIGRATIONS" : var.RUN_MIGRATIONS,
+    "ADMIN_EMAILS" : var.ADMIN_EMAILS,
 
   })
 
-  encrypted_user_data = jsonencode({    
-    "DB_PASSWORD": var.DB_PASSWORD,
-    "APP_KEY": var.APP_KEY,
+  encrypted_user_data = jsonencode({
+    "DB_PASSWORD" : var.DB_PASSWORD,
+    "APP_KEY" : var.APP_KEY,
   })
 
-  
+
   tags = {
     "app_group" = var.tag_app_group
   }
@@ -76,4 +76,14 @@ output "MY_FUNCTION_URN" {
 
 output "MY_FUNCTION_VERSION" {
   value = opentelekomcloud_fgs_function_v2.MyFunction.version
+}
+
+# Image URL currently deployed (used by MakefileTF tf_apply_no_push,
+# which must not change the image)
+output "MY_FUNCTION_IMAGE" {
+  value = opentelekomcloud_fgs_function_v2.MyFunction.custom_image[0].url
+}
+
+output "MY_FUNCTION_TEST" {
+  value = opentelekomcloud_fgs_function_v2.MyFunction.runtime
 }
